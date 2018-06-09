@@ -24,6 +24,23 @@ def format_data(data):
     # there is difference between double and single quotes
     data = data.replace("\n", " redditnewlinechar ").replace('"', "'")
 
+# NOTEe TO SELF: COMBINE THESE INTO ONE FUNCTION!
+
+def find_existing_score(pid):
+    try:
+        # looks for anywhere where the comment_id is the parent
+        sql = "SELECT score FROM parent_reply WHERE parent_id = '{}' LIMIT 1".format(pid)
+        # execute and return results
+        c.execute(sql)
+        result = c.fetchone()
+        if result != None:
+            return result[0]
+        else: return False
+    # catches any exceptions
+    except Exception as e:
+        print("find_existing_score", e)
+        return False;
+
 def find_parent(pid):
     try:
         # looks for anywhere where the comment_id is the parent
@@ -38,6 +55,20 @@ def find_parent(pid):
     except Exception as e:
         print("find_parent", e)
         return False;
+
+def acceptable(data):
+    # since we'll be using multiple models, we need to keep the data at 50 words
+    # we need to make sure that the data has at least 1 word and isn't an empty comment
+    if len(data.split(' ')) > 50 or len(data) < 1:
+        return False
+    # we don't want to use data with more than 1,000 characters
+    elif len(data) > 1000:
+        return False
+    # we don't want to use comments that are just [deleted] or [removed]
+    elif data = '[deleted]' or data = '[removed]':
+        return False
+    else:
+        return True
 
 # makes sure table is always created
 if __name__ == "__main__":
@@ -56,5 +87,12 @@ if __name__ == "__main__":
             created_utc = row['created_utc']
             score = row['score']
             subreddit = row['subreddit']
-
             parent_data = find_parent(parent_id)
+
+            # ensures that at least 2 people saw the comment (the score represents the upvote count)
+            if score >= 2:
+                # if a reply already exists for that comment, look at the score of the comment.
+                # If the comment has a better score, then update the row
+                existing_comment_score = find_existing_score(parent_id)
+                if existing_comment_score:
+                    if score > existing_comment_score:
