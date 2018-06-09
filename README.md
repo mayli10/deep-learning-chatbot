@@ -1,2 +1,2 @@
 # deeplearning
-A deep recurrent neural network for processing digital phenotyping data.
+A chatbot made with a deep recurrent neural network and all of the Reddit comments in March 2018.
