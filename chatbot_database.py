@@ -7,7 +7,7 @@ timeframe = '2018-03'
 sql_transaction = []
 
 # if the database doesn't exist, sqlite3 will create the database
-connection = sqlite3.connect('/Volumes/Seagate Expansion Drive/RC_2018-03.db'.format(timeframe))
+connection = sqlite3.connect('/Volumes/Seagate Expansion Drive/RC_{}.db'.format(timeframe))
 c = connection.cursor()
 
 def create_table():
@@ -16,13 +16,36 @@ def create_table():
     comment_id TEXT UNIQUE, parent TEXT, comment TEXT, subreddit TEXT,
     unix INT, score INT)""")
 
+
+def format_data(data):
+    # replace new lines so that the new line character doesn't get tokenized along with the word.
+    # create a fake word called redditnewlinechar to replace all new line characters
+    # replace all double quotes with single quotes to not confuse our model into thinking
+    # there is difference between double and single quotes
+    data = data.replace("\n", " redditnewlinechar ").replace('"', "'")
+
+def find_parent(pid):
+    try:
+        # looks for anywhere where the comment_id is the parent
+        sql = "SELECT comment FROM parent_reply WHERE comment_id = '{}' LIMIT 1".format(pid)
+        # execute and return results
+        c.execute(sql)
+        result = c.fetchone()
+        if result != None:
+            return result[0]
+        else: return False
+    # catches any exceptions
+    except Exception as e:
+        print("find_parent", e)
+        return False;
+
 # makes sure table is always created
 if __name__ == "__main__":
     create_table()
     row_counter = 0
     paired_rows = 0 #counts number of parent-and-child pairs (comments with replies)
 
-    with open("/Volumes/Seagate Expansion Drive/RC_2018-03".format(timeframe.split('-')[0], timeframe), buffer=1000) as f:
+    with open("/Volumes/Seagate Expansion Drive/RC_{}".format(timeframe), buffering=1000) as f:
         # start iterating through f
         for row in f:
             row_counter += 1
@@ -33,3 +56,5 @@ if __name__ == "__main__":
             created_utc = row['created_utc']
             score = row['score']
             subreddit = row['subreddit']
+
+            parent_data = find_parent(parent_id)
