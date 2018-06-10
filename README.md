@@ -4,10 +4,10 @@ A Beginner's Guide to Building Sentdex's Deep Learning Chatbot
 Table of Contents
 -------------
 1. [Foreword](#foreword)
-2. [Introduction](#introduction)
-3. [Prerequisites: Methods and Tools](#prerequisites-methods-and-tools)
-4. [What is NMT?](#what-is-nmt)
-5. [What is Deep Learning?](#what-is-deep-learning)
+2. [Prerequisites: Methods and Tools](#prerequisites-methods-and-tools)
+3. [Introduction](#introduction)
+4. [What is Deep Learning?](#what-is-deep-learning)
+5. [What is NMT?](#what-is-nmt)
 6. [Datasets](#datasets)
 7. [Setup](#setup)
 8. [Step 1: Structure the Database](#step-1-structure-the-database)
@@ -22,10 +22,12 @@ Table of Contents
 
 Foreword
 ---------
+Because this will be a very beginner-oriented tutorial, I will leave out how to approach the more advanced options such as using the entire dataset of Reddit comments and the extra code that we would need to write to work with that. If you would like to learn more, sentdex covers this in detail here:
 
 Introduction
 -------------
-Because this will be very beginner-oriented tutorial, I will leave out how to approach the more advanced options such as using the entire dataset of Reddit comments and the extra code that we would need to write to work with that. If you would like to learn more, sentdex covers this in detail here:
+When I hear the buzzwords *neural network* or *deep learning*, my first thought is *intimidated*. 
+Even with a background in Computer Science and Math, at a college where machine learning courses are not offered, self-teaching machine learning is challenging. The modern rapidly-advancing world of artificial intelligence is full of exhilarating and pioneering new approaches for training machines to make humans' lives easier, but the barrier to entry for learning how to build your own machine learning models is still dizzyingly high. 
 
 Prerequisites: Methods and Tools
 ---------------------------------
