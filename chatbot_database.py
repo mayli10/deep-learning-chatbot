@@ -7,7 +7,7 @@ timeframe = '2015-05'
 sql_transaction = []
 
 # if the database doesn't exist, sqlite3 will create the database
-connection = sqlite3.connect('/Volumes/Seagate Expansion Drive/{}.db'.format(timeframe))
+connection = sqlite3.connect('../data/{}.db'.format(timeframe))
 c = connection.cursor()
 
 # this is the query that stores these values
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     row_counter = 0
     paired_rows = 0
 
-    with open("/Volumes/Seagate Expansion Drive/RC_{}".format(timeframe), buffering=1000) as f:
+    with open("../data/RC_{}".format(timeframe), buffering=1000) as f:
         for row in f:
             row_counter += 1
             row = json.loads(row)
