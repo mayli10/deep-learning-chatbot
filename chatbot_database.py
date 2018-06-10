@@ -2,7 +2,7 @@ import sqlite3
 import json # used to load the lines from data
 from datetime import datetime # used to log
 
-timeframe = '2018-03'
+timeframe = '2015-05'
 # to build a big transaction to commit all rows at once instead of one at a time
 sql_transaction = []
 
@@ -71,7 +71,7 @@ def acceptable(data):
 def sql_insert_replace_comment(commentid, parentid, parent, comment, subreddit, time, score):
     try:
         # overwrite the information with a new comment with better score
-        sql = """UPDATE parent_reply SET parent_id = {}, comment_id = {}, parent = {}, comment = {}, subreddit = {}, unix = {}, score = {} WHERE parent_id ={};""".format(parentid, commentid, parent, comment, subreddit, int(time), score, parentid)
+        sql = """UPDATE parent_reply SET parent_id = ?, comment_id = ?, parent = ?, comment = ?, subreddit = ?, unix = ?, score = ? WHERE parent_id =?;""".format(parentid, commentid, parent, comment, subreddit, int(time), score, parentid)
         transaction_bldr(sql)
     except Exception as e:
         print('s-UPDATE insertion',str(e))
@@ -129,7 +129,7 @@ if __name__ == "__main__":
             created_utc = row['created_utc']
             score = row['score']
             subreddit = row['subreddit']
-            comment_id = row['link_id']
+            comment_id = row['name']
             parent_data = find_parent(parent_id)
 
             # ensures that at least 2 people saw the comment (the score represents the upvote count)
