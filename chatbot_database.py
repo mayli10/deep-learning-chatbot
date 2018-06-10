@@ -7,7 +7,7 @@ timeframe = '2015-05'
 sql_transaction = []
 
 # if the database doesn't exist, sqlite3 will create the database
-connection = sqlite3.connect('/Volumes/Seagate Expansion Drive/{}'.format(timeframe))
+connection = sqlite3.connect('/Volumes/Seagate Expansion Drive/{}.db'.format(timeframe))
 c = connection.cursor()
 
 # this is the query that stores these values
