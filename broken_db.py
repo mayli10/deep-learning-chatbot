@@ -2,28 +2,29 @@ import sqlite3
 import json # used to load the lines from data
 from datetime import datetime # used to log
 
-# to build a big transaction to commit all rows at once instead of one at a time
 timeframe = '2015-05'
+# to build a big transaction to commit all rows at once instead of one at a time
 sql_transaction = []
 
 # if the database doesn't exist, sqlite3 will create the database
 connection = sqlite3.connect('/Volumes/Seagate Expansion Drive/{}'.format(timeframe))
 c = connection.cursor()
 
-# this is the query that stores these values
 def create_table():
+    # this is the query that stores these values
     c.execute("CREATE TABLE IF NOT EXISTS parent_reply(parent_id TEXT PRIMARY KEY, comment_id TEXT UNIQUE, parent TEXT, comment TEXT, subreddit TEXT, unix INT, score INT)")
 
-# replace new lines so that the new line character doesn't get tokenized along with the word.
-# create a fake word called newlinechar to replace all new line characters
-# replace all double quotes with single quotes to not confuse our model into thinking
-# there is difference between double and single quotes
 def format_data(data):
+    # replace new lines so that the new line character doesn't get tokenized along with the word.
+    # create a fake word called newlinechar to replace all new line characters
+    # replace all double quotes with single quotes to not confuse our model into thinking
+    # there is difference between double and single quotes
     data = data.replace('\n',' newlinechar ').replace('\r',' newlinechar ').replace('"',"'")
     return data
 
-# We want to global the sql_transaction variable so that we can eventually clear out that variable
 def transaction_bldr(sql):
+    # We want to global the sql_transaction variable so that we can eventually
+    # clear out that variable
     global sql_transaction
     # keep appending the sql statements to the transaction until it's a certain size
     sql_transaction.append(sql)
@@ -92,29 +93,34 @@ def find_parent(pid):
         if result != None:
             return result[0]
         else: return False
+    # catches any exceptions
     except Exception as e:
-        #print(str(e))
+        #print("find_parent", e)
         return False
 
 def find_existing_score(pid):
     try:
+        # looks for anywhere where the comment_id is the parent
         sql = "SELECT score FROM parent_reply WHERE parent_id = '{}' LIMIT 1".format(pid)
+        # execute and return results
         c.execute(sql)
         result = c.fetchone()
         if result != None:
             return result[0]
         else: return False
+    # catches any exceptions
     except Exception as e:
-        #print(str(e))
+        #print("find_existing_score", e)
         return False
 
-# makes sure table is always created and counts number of parent-and-child pairs (comments with replies)
+# makes sure table is always created
 if __name__ == '__main__':
     create_table()
     row_counter = 0
-    paired_rows = 0
+    paired_rows = 0 #counts number of parent-and-child pairs (comments with replies)
 
     with open("/Volumes/Seagate Expansion Drive/RC_{}".format(timeframe), buffering=1000) as f:
+        # start iterating through f
         for row in f:
             row_counter += 1
             row = json.loads(row)
@@ -135,16 +141,17 @@ if __name__ == '__main__':
                     if score > existing_comment_score:
                         if acceptable(body):
                             sql_insert_replace_comment(comment_id,parent_id,parent_data,body,subreddit,created_utc,score)
-                # case 2: if there isn't an existing comment score but there is a parent, insert with the parent_data
-                else:
-                    if acceptable(body):
-                        if parent_data:
-                            sql_insert_has_parent(comment_id,parent_id,parent_data,body,subreddit,created_utc,score)
-                            paired_rows += 1
-                        # case 3: if there is no parent, then the comment itself is also the parent. You still want to sql_insert_no_parent
-                        # the data because this comment might still be someone else's parent, so you want to store its information
-                        else:
-                            sql_insert_no_parent(comment_id,parent_id,body,subreddit,created_utc,score)
-            # test the data to see the rows
+
+                    # case 2: if there isn't an existing comment score but there is a parent, insert with the parent_data
+                    else:
+                        if acceptable(body):
+                            if parent_data:
+                                sql_insert_has_parent(comment_id,parent_id,parent_data,body,subreddit,created_utc,score)
+                                paired_rows += 1
+                            # case 3: if there is no parent, then the comment itself is also the parent. You still want to sql_insert_no_parent
+                            # the data because this comment might still be someone else's parent, so you want to store its information
+                            else:
+                                sql_insert_no_parent(comment_id,parent_id,body,subreddit,created_utc,score)
+                # test the data to see the rows
             if row_counter % 100000 == 0:
                 print('Total Rows Read: {}, Paired Rows: {}, Time: {}'.format(row_counter, paired_rows, str(datetime.now())))
