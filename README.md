@@ -1,4 +1,4 @@
-A Beginner's Guide to Building Sentdex's Deep Learning Chatbot
+A Beginner's Guide to Building a Deep Learning Chatbot
 ===================
 
 Table of Contents
