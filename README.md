@@ -4,18 +4,18 @@ A Beginner's Guide to Building a Deep Learning Chatbot
 Table of Contents
 -------------
 1. [Foreword](#foreword)
-2. [Prerequisites: Methods and Tools](#prerequisites-methods-and-tools)
-3. [Introduction](#introduction)
-4. [What is Deep Learning and NMT?](#what-is-deep-learning-and-nmt)
+2. [Introduction](#introduction)
+3. [Prerequisites: Methods and Tools](#prerequisites-methods-and-tools)
+4. [Setup](#setup)
 5. [Datasets](#datasets)
-6. [Setup](#setup)
-7. [Step 1: Structure the Database](#step-1-structure-the-database)
-8. [Step 2: Clean the Data](#step-2-clean-the-data)
-9. [Step 3: Write SQL Insertions](#step-3-write-sql-insertions)
-10. [Step 4: Build Paired Rows](#step-4-build-paired-rows)
-11. [Step 5: Partition the Data](#step-5-partition-the-data)
-12. [Step 6: Train with nmt-chatbot](#step-6-train-with-nmt-chatbot)
-13. [Step 7: Interact and Test](#step-7-interact-and-test)
+6. [Deep Learning vs. Machine Learning](#deep-learning-vs-machine-learning)
+7. [Chatbot With Neural Machine Translation (NMT)](#chatbot-with-neural-machine-translation-nmt)
+8. [Step 1: Structure and Clean the Data](#step-1-structure-and-clean-the-data)
+9. [Step 2: Write SQL Insertions](#step-2-write-sql-insertions)
+10. [Step 3: Build Paired Rows](#step-3-build-paired-rows)
+11. [Step 4: Partition the Data](#step-4-partition-the-data)
+12. [Step 5: Train with nmt-chatbot](#step-5-train-with-nmt-chatbot)
+13. [Step 6: Interact and Test](#step-6-interact-and-test)
 14. [Results and Reflection](#results-and-reflection)
 15. [Acknowledgements](#acknowledgements)
 
@@ -38,8 +38,6 @@ My primary goal in building this chatbot is to first understand the foundations 
 Thus, this tutorial serves as both an everything-you-need-to-know walk-through for those who are just beginning to build deep learning models as well as a documentation of my own journey of building this bot.
 
 **Thus, I decided to document my experience and create this deep-dive beginner-oriented tutorial which will help ease the bugs that arise. All material has been adapted from [sentdex](https://www.youtube.com/watch?v=dvOnYLDg8_Y&t=140s). This tutorial serves as both an everything-you-need-to-know walk-through for those who are just beginning to build deep learning models as well as a documentation of my own journey of building this bot!**
-
-
 
 Prerequisites: Methods and Tools
 ---------------------------------
@@ -98,30 +96,228 @@ This **sequence-to-sequence** model (colloquially referred to in the ML communit
 
 It is essential that we use Bi-Directional Recurrent Neural Networks because with organic human language, there is value in understanding the context of the words or sentences in relation to other words and sentences. Because both the past, present, and future data in the sentence is important to remember and know to understand the sentence as a whole, we need a neural network that has an input sequence that can go both ways (forward and reverse) to understand a sentence. What differentiates the BRNN from a simple RNN is this ability, which is due to a hidden layer between the input and output layers of the network that can pass data both forwards and backwards, essentially giving the network the ability to understand previous, present, and incoming input as a cohesive whole.
 
-Step 1: Structure the Database 
--------------------------------
+Step 1: Structure and Clean the Data
+--------------------------------------
+Starting at these steps, please view and follow along with my chatbot_database.py file
+(included below). I provide commentary (indicated by the #) to almost every block of code to explain what is happening at each line. Note: If you're also following along in the video and text tutorials, sentdex talks about buffering through the data if you're working with multiple months of data. This is an advanced option that I will not be explaining in detail because we will only be working with 1 month,  but we will still write the code that sets up the data buffering. 
+
+Let's first store the data into an SQLite database, so we will need to import SQLite3 so we can insert the data into the database with sqlite3 queries.
+
+We will also need to import JSON to load the lines of data and to import datetime to log
+and keep track of how long it takes to process the data. **Seeing the date of time of when each set of data finished processing is extremely helpful for determining how long it will take to finish!**
+```
+import sqlite3
+import json # used to load the lines from data
+from datetime import datetime # used to log
+```
+
+We will then create some variables, and also structure the code so that we are able to
+create one SQL interaction that executes all the code at once instead of one at a time.
+
+```
+# to build a big transaction to commit all rows at once instead of one at a time
+timeframe = '2015-05'
+sql_transaction = []
+```
+
+Now comes making the connection to the data. **This is a part that caused me a bit of trouble and was not made clear on the tutorial.**
+It is important to note that {} in Python acts as a placeholder for another value that comes d
+directly afterwards, often as a parameter inside .format(). You must include /{}.db after
+including the path name of your file. To see your path name, you can often just open a terminal and drag and drop your file into the terminal to see the path.
+
+Essentially, this is how you write your connection script with PATH_NAME_OF_DATA replaced with the path name of your data:
+```connection = sqlite3.connect('PATH_NAME_OF_DATA/{}.db'.format(timeframe))```
+
+```
+# if the database doesn't exist, sqlite3 will create the database
+connection = sqlite3.connect('/Volumes/Seagate Expansion Drive/{}.db'.format(timeframe))
+c = connection.cursor()
+```
+
 Now that you have your data, let’s look at one row of JSON data:
 ```{"author":"Arve","link_id":"t3_5yba3","score":0,"body":"Can we please deprecate the word \"Ajax\" now? \r\n\r\n(But yeah, this _is_ much nicer)","score_hidden":false,"author_flair_text":null,"gilded":0,"subreddit":"reddit.com","edited":false,"author_flair_css_class":null,"retrieved_on":1427426409,"name":"t1_c0299ap","created_utc":"1192450643","parent_id":"t1_c02999p","controversiality":0,"ups":0,"distinguished":null,"id":"c0299ap","subreddit_id":"t5_6","downs":0,"archived":true}```
 
-The most important fields that we will factor in are parent_id, comment_id, body, name, and score. 
+The most important fields that we will factor in are parent_id, comment_id, body, name, and score. Let's store all the values into a table, but let's focus on those aforementioned fields when we write our functions to further clean our data. 
 
-Let’s talk about the paired comment-replies in more detail. 
-Because we need an input and an output, we need to pick comments that have at least 1 reply as the input, and the most upvoted reply (or only reply) for the output. We also need to consider the third case, where the comment’s reply has a reply. In this case, we would need to consider the comment as the input, and the comment’s first reply as the output. But, the comment’s first reply would then also serve as a comment itself with its own paired reply, so essentially we would have two paired rows, one nested in another. This brings us to the logical conclusion that we must be careful not to only check if there is a reply for a comment, we must also see if the comment is itself a reply to another comment. Since every comment can potentially have a reply, every comment will be considered a parent.
+```
+def create_table():
+    c.execute("CREATE TABLE IF NOT EXISTS parent_reply(parent_id TEXT PRIMARY KEY, comment_id TEXT UNIQUE, parent TEXT, comment TEXT, subreddit TEXT, unix INT, score INT)")
+```
+Here, you want to replace new lines so that the new line character doesn't get tokenized along with the word. To do this, we will create a fake word called 'newlinechar' to replace all new line characters. This is the same with quotes, so replace all double quotes with single quotes so to not confuse our model into thinking there is difference between double and single quotes.
 
-Step 2: Clean the Data
-------------------------
+```
+def format_data(data):
+    data = data.replace('\n',' newlinechar ').replace('\r',' newlinechar ').replace('"',"'")
+    return data
+```
 
-Step 3: Write SQL Insertions 
+Next, we want to make the sql_transaction variable a global variable so that we can eventually clear out that variable after we execute all the statements and commit them. 
+
+```
+def transaction_bldr(sql):
+    global sql_transaction
+    # keep appending the sql statements to the transaction until it's a certain size
+    sql_transaction.append(sql)
+    if len(sql_transaction) > 1000:
+        c.execute('BEGIN TRANSACTION')
+        # for each sql statement we will try to execute it, otherwise we will just
+        # accept the statement
+        for s in sql_transaction:
+            try:
+                c.execute(s)
+            except:
+                pass
+        # after we execute all the statements, we will just commit
+        connection.commit()
+        # and then empty out the transaction
+        sql_transaction = []
+```
+
+Now, let's make sure that our data is acceptable to use. If the data is an empty comment, removed or deleted (Reddit displays
+removed or deleted comments with brackets), or too long of a comment, then we don't want to use that data.
+
+```
+def acceptable(data):
+    # since we'll be using multiple models, we need to keep the data at 50 words
+    # we need to make sure that the data has at least 1 word and isn't an empty comment
+    if len(data.split(' ')) > 50 or len(data) < 1:
+        return False
+    # we don't want to use data with more than 1,000 characters
+    elif len(data) > 1000:
+        return False
+    # we don't want to use comments that are just [deleted] or [removed]
+    elif data == '[deleted]':
+        return False
+    elif data == '[removed]':
+        return False
+    else:
+        return True
+```
+Next, let’s talk about the paired comment-replies in more detail. 
+Because we need an input and an output, we need to pick comments that have at least 1 reply as the input, and the most upvoted reply (or only reply) for the output. 
+
+Since we will insert every comment into the database chronologically, every comment will initially be considered a parent. We will write functions to differentiate the replies and organize the rows into comment-reply paired rows. Then, if we find a reply to a parent that has a higher-voted score than the previous reply, we will replace that original reply with the new and better reply.
+
+The find_parent function will take in a parent_id (named in the parameter field as 'pid') and find the parents, which are found when the comment_id also the parent_id. We want to find the parents to create the parent-reply paired rows, as this will serve as our input (parent) and our output that the chatbot will infer its reply from (reply).
+
+```
+def find_parent(pid):
+    try:
+        # looks for anywhere where the comment_id is the parent
+        sql = "SELECT comment FROM parent_reply WHERE comment_id = '{}' LIMIT 1".format(pid)
+        # execute and return results
+        c.execute(sql)
+        result = c.fetchone()
+        if result != None:
+            return result[0]
+        else: return False
+    except Exception as e:
+        #print(str(e))
+        return False
+```
+Let's also write a function that will find the existing score of the comment using the parent_id. This will help us select the best reply to pair with the parent in the next section.
+```
+def find_existing_score(pid):
+    try:
+        sql = "SELECT score FROM parent_reply WHERE parent_id = '{}' LIMIT 1".format(pid)
+        c.execute(sql)
+        result = c.fetchone()
+        if result != None:
+            return result[0]
+        else: return False
+    except Exception as e:
+        #print(str(e))
+        return False
+```
+
+Step 2: Write SQL Insertions
 ----------------------------------
 
-Step 4: Build Paired Rows
+# SQL Queries
+```
+def sql_insert_replace_comment(commentid,parentid,parent,comment,subreddit,time,score):
+    try:
+        # overwrite the information with a new comment with better score
+        sql = """UPDATE parent_reply SET parent_id = ?, comment_id = ?, parent = ?, comment = ?, subreddit = ?, unix = ?, score = ? WHERE parent_id =?;""".format(parentid, commentid, parent, comment, subreddit, int(time), score, parentid)
+        transaction_bldr(sql)
+    except Exception as e:
+        print('s0 insertion',str(e))
+```
+```
+def sql_insert_has_parent(commentid,parentid,parent,comment,subreddit,time,score):
+    try:
+        # inserting a new row with parent id and parent body
+        sql = """INSERT INTO parent_reply (parent_id, comment_id, parent, comment, subreddit, unix, score) VALUES ("{}","{}","{}","{}","{}",{},{});""".format(parentid, commentid, parent, comment, subreddit, int(time), score)
+        transaction_bldr(sql)
+    except Exception as e:
+        print('s0 insertion',str(e))
+```
+```
+def sql_insert_no_parent(commentid,parentid,comment,subreddit,time,score):
+    try:
+        # insert information in case the comment is a parent for another comment
+        sql = """INSERT INTO parent_reply (parent_id, comment_id, comment, subreddit, unix, score) VALUES ("{}","{}","{}","{}",{},{});""".format(parentid, commentid, comment, subreddit, int(time), score)
+        transaction_bldr(sql)
+    except Exception as e:
+        print('s0 insertion',str(e))
+```
+
+Step 3: Build Paired Rows
 --------------------------
 
-Step 5: Partition the Data 
-----------------------------
+# makes sure table is always created and counts number of parent-and-child pairs (comments with replies)
+```
+if __name__ == '__main__':
+    create_table()
+    row_counter = 0
+    paired_rows = 0
+```
+#
+```
+    with open("/Volumes/Seagate Expansion Drive/RC_{}".format(timeframe), buffering=1000) as f:
+        for row in f:
+            row_counter += 1
+            row = json.loads(row)
+            parent_id = row['parent_id']
+            # using a helper function called format_data to clean up the data
+            body = format_data(row['body'])
+            created_utc = row['created_utc']
+            score = row['score']
+            comment_id = row['name']
+            subreddit = row['subreddit']
+            parent_data = find_parent(parent_id)
+```
+ensures that at least 2 people saw the comment (the score represents the upvote count)
 
-Step 6: Train with [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot) 
+```
+            if score >= 2:
+                # if a reply already exists for that comment, look at the score of the comment.
+                existing_comment_score = find_existing_score(parent_id)
+                # case 1: If the comment has a better score, then update the row
+                if existing_comment_score:
+                    if score > existing_comment_score:
+                        if acceptable(body):
+                            sql_insert_replace_comment(comment_id,parent_id,parent_data,body,subreddit,created_utc,score)
+                # case 2: if there isn't an existing comment score but there is a parent, insert with the parent_data
+                else:
+                    if acceptable(body):
+                        if parent_data:
+                            sql_insert_has_parent(comment_id,parent_id,parent_data,body,subreddit,created_utc,score)
+                            paired_rows += 1
+                        # case 3: if there is no parent, then the comment itself is also the parent. You still want to sql_insert_no_parent
+                        # the data because this comment might still be someone else's parent, so you want to store its information
+                        else:
+                            sql_insert_no_parent(comment_id,parent_id,body,subreddit,created_utc,score)
+            # test the data to see the rows
+            if row_counter % 100000 == 0:
+                print('Total Rows Read: {}, Paired Rows: {}, Time: {}'.format(row_counter, paired_rows, str(datetime.now())))
+```
+
+Step 4: Partition the Data
 --------------------------------
+
+Step 5: Train with [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot) 
+------------------------------------------------------------------------------------
 I originally began with my mac, but it soon became clear that I wouldn't be able to even begin without using tensorflow-gpu, which isn't supported on OS operation systems anymore.
 So, George Witteman graciously pulled out his Linux system 8gb of memory and 1.5 tb of storage to train on. Even then, it took 11 hours to train, and it hadn't even finished training.
 
@@ -129,7 +325,7 @@ So after getting Paperspace approved, I decided to spring $10 and go ahead. Use 
 Problems with Ubuntu - you need to download tensorflow gpu with a series of other pieces of software. You can take this route, but it's time intensive.
 I decided to just leave it to my sample data.
 
-Step 7: Interact and Test
+Step 6: Interact and Test
 ------------------------------
 
 Results and Reflection
