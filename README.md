@@ -100,6 +100,13 @@ It is essential that we use Bi-Directional Recurrent Neural Networks because wit
 
 Step 1: Structure the Database 
 -------------------------------
+Now that you have your data, let’s look at one row of JSON data:
+```{"author":"Arve","link_id":"t3_5yba3","score":0,"body":"Can we please deprecate the word \"Ajax\" now? \r\n\r\n(But yeah, this _is_ much nicer)","score_hidden":false,"author_flair_text":null,"gilded":0,"subreddit":"reddit.com","edited":false,"author_flair_css_class":null,"retrieved_on":1427426409,"name":"t1_c0299ap","created_utc":"1192450643","parent_id":"t1_c02999p","controversiality":0,"ups":0,"distinguished":null,"id":"c0299ap","subreddit_id":"t5_6","downs":0,"archived":true}```
+
+The most important fields that we will factor in are parent_id, comment_id, body, name, and score. 
+
+Let’s talk about the paired comment-replies in more detail. 
+Because we need an input and an output, we need to pick comments that have at least 1 reply as the input, and the most upvoted reply (or only reply) for the output. We also need to consider the third case, where the comment’s reply has a reply. In this case, we would need to consider the comment as the input, and the comment’s first reply as the output. But, the comment’s first reply would then also serve as a comment itself with its own paired reply, so essentially we would have two paired rows, one nested in another. This brings us to the logical conclusion that we must be careful not to only check if there is a reply for a comment, we must also see if the comment is itself a reply to another comment. Since every comment can potentially have a reply, every comment will be considered a parent.
 
 Step 2: Clean the Data
 ------------------------
