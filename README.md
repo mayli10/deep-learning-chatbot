@@ -92,6 +92,8 @@ Building a chatbot with deep learning is an exciting approach that is radically 
 
 However, in deep learning, the process is much different. We will not be specifying features to the bot, but will instead expect the bot to detect these features itself and respond appropriately. Particularly, we will be using **Neural Machine Translation (NMT),** which is a vast artificial neural network that uses deep learning and feature learning to model full sentences with machine translation. This approach specializes in producing continuous sequences of words better than the traditional approach of using a recurrent neural network (RNN) because it mimics how humans translate sentences. Essentially, when we translate, we read through the entire sentence, understand what the sentence means, and then we translate the sentence. NMT performs this process with an encoder-decoder architecture; the encoder transforms the sentence into a vector of numbers that represent the meaning of the sentence and then the decoder takes this meaning vector and constructs a translated sentence. Thus, at its core, an NMT model is a deep multi-layer with 2 Bi-Directional Recurrent Neural Networks: the encoder BRNN and the decoder BRNN. Here is an example from sentdex’s tutorial that shows this architecture:
 
+![alt text](/encdec.jpg?raw=true "Encoder-Decoder Architecture from the tensorflow/nmt GitHub")
+
 This **sequence-to-sequence** model (colloquially referred to in the ML community as seq2seq) is often used for machine translation, text summarization, and speech recognition, and TensorFlow provides a tutorial on building your own NMT model [here](https://github.com/tensorflow/nmt). As a beginner, I found that this tutorial was a little too dense to understand, so I recommend using sentdex’s NMT [model](https://github.com/daniel-kukiela/nmt-chatbot) built specifically for this tutorial that includes additional utilities along with a pre-trained NMT model. (Aside: I intend to build my own seq2seq model after further self-learning, as my current attempts at building this model have been insufficient for use in building this deep learning chatbot).
 
 It is essential that we use Bi-Directional Recurrent Neural Networks because with organic human language, there is value in understanding the context of the words or sentences in relation to other words and sentences. Because both the past, present, and future data in the sentence is important to remember and know to understand the sentence as a whole, we need a neural network that has an input sequence that can go both ways (forward and reverse) to understand a sentence. What differentiates the BRNN from a simple RNN is this ability, which is due to a hidden layer between the input and output layers of the network that can pass data both forwards and backwards, essentially giving the network the ability to understand previous, present, and incoming input as a cohesive whole.
@@ -419,7 +421,10 @@ Now, let's increment the counter and keep the loop going. Every 20 x limit (sinc
 
 Step 5: Train with [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot) 
 ------------------------------------------------------------------------------------
-I originally began with my mac, but it soon became clear that I wouldn't be able to even begin without using tensorflow-gpu, which isn't supported on OS operation systems anymore.
+**Get ready for the motherlode of timesucks** - *training your model*
+This is where the biggest bugs and obstacles will arise. If you can't train your model, then all this hard work is for nothing, so you and I both will keep finding a way to make it work until it does. Before showing you how to run your model, let me first tell you my story and how I am still fighting this battle right now so you don't make the same mistakes as me.
+
+I originally naively began attemping to train my bot with my mac, but it soon became clear that I wouldn't be able to even begin without using tensorflow-gpu, which isn't supported on OS operation systems anymore.
 So, George Witteman graciously pulled out his Linux system 8gb of memory and 1.5 tb of storage to train on. Even then, it took 11 hours to train, and it hadn't even finished training.
 
 So after getting Paperspace approved, I decided to spring $10 and go ahead. Use this link for $10 of free credit for a virtual environment. 
@@ -433,14 +438,16 @@ used nmt-chatbot which provides tools for your bot. it's a set of utitlities sit
  problem: data storage so plugged in external harddrive
  mac doesnt allow tensorflow-gpu and this is important
 
-
 Step 6: Interact and Test
 ------------------------------
-**Work in Progress! Data is still training. (It has been 50 hours at this point. I'm also using 3 separate servers...!)**
+**Work in Progress! Data is still training. (It has been 50 hours at this point. I'm also using 2 separate servers...see below!)**
+![alt text](/mac.jpeg?raw=true "George's Mac: still running TensorFlow on sample-sized data")
 
 Results and Reflection
 -----------------------
-**Work in Progress! Data is still training. (It has been 50 hours at this point. I'm also using 3 separate servers...!)**
+**Work in Progress! Data is still training. (It has been 50 hours at this point. I'm also using 2 separate servers...see below!)**
+![alt text](/pc.jpeg?raw=true "George's PC: still running TensorFlow-GPU on the May 2015 data")
+
 
 Acknowledgements
 -----------------
