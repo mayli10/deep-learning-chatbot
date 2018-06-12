@@ -36,7 +36,7 @@ However, I realized that there is still a signficant learning curve involved for
 
 My primary goal in building this chatbot is to first understand the foundations for building a deep learning chatbot, and then curating my chatbot to address a specific need in the mental health care industry. My secondary goal is to provide the essentials tips and bug fixes that have not been properly documented in the original tutorial and that I have learned through my own experience. I realized that without this supplemental information, I would not have been able to complete the tutorial by my own. 
 
-**Thus, I decided to document my experience and create this deep-dive beginner-oriented tutorial which will help ease the bugs that arise. All material has been adapted from [sentdex](https://www.youtube.com/watch?v=dvOnYLDg8_Y&t=140s). This tutorial serves as both an everything-you-need-to-know walk-through for those who are just beginning to build deep learning models as well as a documentation of my own journey of building this bot!**
+**Thus, I decided to document my experience and create this deep-dive beginner-oriented tutorial which will help ease the bugs that arise. All material has been learned and adapted from [sentdex's tutorials](https://www.youtube.com/watch?v=dvOnYLDg8_Y&t=140s). This tutorial serves as both an everything-you-need-to-know walk-through for those who are just beginning to build deep learning models as well as a documentation of my own journey of building this bot!**
 
 Prerequisites: Methods and Tools
 ---------------------------------
