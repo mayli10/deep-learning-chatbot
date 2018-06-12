@@ -104,7 +104,8 @@ Starting at these steps, please view and follow along with my chatbot_database.p
 Let's first store the data into an SQLite database, so we will need to import SQLite3 so we can insert the data into the database with sqlite3 queries.
 
 We will also need to import JSON to load the lines of data and to import datetime to log
-and keep track of how long it takes to process the data. **Seeing the date of time of when each set of data finished processing is extremely helpful for determining how long it will take to finish!**
+and keep track of how long it takes to process the data. **Seeing the date of time of when each set of data finished processing is extremely helpful for determining how long it will take to finish!** 
+
 ```
 import sqlite3
 import json # used to load the lines from data
@@ -232,8 +233,10 @@ def find_existing_score(pid):
 
 Step 2: Write SQL Insertions
 ----------------------------------
+Here, we will define SQLite insertions that will essentially add or change information in the database we are building. 
+We will define a function called sql_insert_replace_comment that will take in the main fields of a comment, and replace the comment if the comment has a better score than the previous comment.
+**NOTE: If your compiler has a difficult time recognizing the ? as characters that will be replaced in a similar way that {} works, then use {} instead. 
 
-# SQL Queries
 ```
 def sql_insert_replace_comment(commentid,parentid,parent,comment,subreddit,time,score):
     try:
@@ -243,6 +246,8 @@ def sql_insert_replace_comment(commentid,parentid,parent,comment,subreddit,time,
     except Exception as e:
         print('s0 insertion',str(e))
 ```
+Next, we will write an insertion query that inserts a new row with the parent_id and parent body if the comment has a parent. This will provide the pair that we will need to train the chatbot.
+
 ```
 def sql_insert_has_parent(commentid,parentid,parent,comment,subreddit,time,score):
     try:
@@ -252,6 +257,8 @@ def sql_insert_has_parent(commentid,parentid,parent,comment,subreddit,time,score
     except Exception as e:
         print('s0 insertion',str(e))
 ```
+Finally, we will write an insertion query that inserts information that will be used in the case that the comment is no parent. We want to insert this information anyways in case the comment is a parent for another comment.
+
 ```
 def sql_insert_no_parent(commentid,parentid,comment,subreddit,time,score):
     try:
@@ -265,14 +272,19 @@ def sql_insert_no_parent(commentid,parentid,comment,subreddit,time,score):
 Step 3: Build Paired Rows
 --------------------------
 
-# makes sure table is always created and counts number of parent-and-child pairs (comments with replies)
+Now, we will sort out our paired rows using the insertion queries and data-cleaning functions we wrote above. To begin, we will start with a check that makes sure a table is always created regardless of whether or not there is data (but there should be data!). We will also create the variables that count the row we are currently at and the number of paired rows, which are parent-and-child pairs (comments with replies).
 ```
 if __name__ == '__main__':
     create_table()
     row_counter = 0
     paired_rows = 0
 ```
-#
+Using our data, let's create our data table by including our features. Assign names for them, such as ```parent_id = 
+row['parent_id']``` Notice that each time we finish a row, we will increment the row counter.We are also using the format_data function we created in Step 1.
+Don't forget that you need to include your file path name again when you are using the open() function as you will be accessing you data files. Follow the format mentioned in Step 1, but this time, you will not be including '.db'.
+
+**NOTE: While you should not have this issue if you are using the correct dataset (May 2015), many other people had the issue of not being able to find the 'name' field. In later months, the name field is replaced by the field 'id_link', so if you do choose to use later datasets, go ahead and make this change.
+
 ```
     with open("/Volumes/Seagate Expansion Drive/RC_{}".format(timeframe), buffering=1000) as f:
         for row in f:
@@ -287,34 +299,123 @@ if __name__ == '__main__':
             subreddit = row['subreddit']
             parent_data = find_parent(parent_id)
 ```
-ensures that at least 2 people saw the comment (the score represents the upvote count)
+Next, let's look at the score. We want to ensure that at least 1 person saw the comment (the score represents the upvote count), so to be extra safe, let's only proceed with designating this row as a reply of a paired row if the score is greater than or equal to 2 upvotes. If a reply already exists for that comment, look at the score of the comment. If the comment has a better score, then check that the data is acceptable, then update the row. However, if there isn't an existing comment score but there is a parent, insert with the parent's data instead.
 
 ```
             if score >= 2:
-                # if a reply already exists for that comment, look at the score of the comment.
                 existing_comment_score = find_existing_score(parent_id)
-                # case 1: If the comment has a better score, then update the row
                 if existing_comment_score:
                     if score > existing_comment_score:
                         if acceptable(body):
                             sql_insert_replace_comment(comment_id,parent_id,parent_data,body,subreddit,created_utc,score)
-                # case 2: if there isn't an existing comment score but there is a parent, insert with the parent_data
+```
+If the score is not greater than or equal to 2 and the data is acceptable, we will check if the data is parent_data. If so, we will count this as the parent of a paired row. If there is no parent, then the comment itself is still considered the parent, so you want to use the insertion query sql_insert_no_parent. We want to do this because the comment still might be someone else's parent!
+```
                 else:
                     if acceptable(body):
                         if parent_data:
                             sql_insert_has_parent(comment_id,parent_id,parent_data,body,subreddit,created_utc,score)
                             paired_rows += 1
-                        # case 3: if there is no parent, then the comment itself is also the parent. You still want to sql_insert_no_parent
-                        # the data because this comment might still be someone else's parent, so you want to store its information
                         else:
                             sql_insert_no_parent(comment_id,parent_id,body,subreddit,created_utc,score)
-            # test the data to see the rows
+```
+We will include a print statement that will help track how your data is processing. 
+When you run your code, it will output a print statement when the program finishes looking through 100,000 rows. 
+```
             if row_counter % 100000 == 0:
                 print('Total Rows Read: {}, Paired Rows: {}, Time: {}'.format(row_counter, paired_rows, str(datetime.now())))
+```
+Finally, let's run this code to create the database of paired rows. **This part is crucial and not made very clear in the tutorial.** 
+
+Your code will take 5-10 hours to run. Mine took 6 hours, and another 3 hours to get this part right. If you are running into issues, check:
+* Your data's path name that you included in open() which provides the connection to your data
+* If you need to change ? to {} for your SQLite insertions
+* If you need to change the 'name' field to 'id_link'
+
+To run your code:
+1. Open your terminal and navigate to the folder containing this Python script (mine is named chatbot_database.py)
+2. In your terminal, type: ```$ python3 chatbot_database.py```
+3. Check to see that your code matches or is very similar to the output below, and let it keep running. The amount of paired rows should increase ~4,000 to ~5,000 each time.
+
+```
+Total Rows Read: 100000, Paired Rows: 3221, Time: 2017-11-14 15:14:33.748595
+Total Rows Read: 200000, Paired Rows: 8071, Time: 2017-11-14 15:14:55.342929
+Total Rows Read: 300000, Paired Rows: 13697, Time: 2017-11-14 15:15:18.035447
+Total Rows Read: 400000, Paired Rows: 19723, Time: 2017-11-14 15:15:40.311376
+Total Rows Read: 500000, Paired Rows: 25643, Time: 2017-11-14 15:16:02.045075
 ```
 
 Step 4: Partition the Data
 --------------------------------
+After you have finished pairing get ready for another timesuck. It will take 2 hours for your code to run this next, so make sure to set apart time to do so!
+
+We will be using the data analysis pandas to help us create a data frame to visualize our data. Since the pandas library isn't included in Python3, import this package by navigating in your terminal to this folder, and typing in your terminal: ```pip3 install pandas```
+
+```
+import sqlite3
+import pandas as pd
+
+timeframes = ['2015-05']
+```
+Now, build the connection (remember how to do it?) and then create the labels. The label limit will represent how many rows we will pull at each time to show in the pandas dataframe, and last_unix will help us buffer through the database.
+
+```
+for timeframe in timeframes:
+    connection = sqlite3.connect('/Volumes/Seagate Expansion Drive/{}.db'.format(timeframe))
+    c = connection.cursor()
+    limit = 5000 
+    last_unix = 0 
+    cur_length = limit
+    counter = 0
+    test_done = False
+```
+Now, we will write a while loop to keep making pulls to the dataframe until we reach the limit to show in the dataframe. Then once we reach the limit, we will put the data into the dataframe.
+
+**NOTE: Since my computer was very slow at creating this dataframe, it would often stall so long that I had thought it stopped running. This was not made clear in sentdex's tutorial, but an easy fix is to just add your own print statement to confirm that your code is running properly. I included the ```print('Before, Time: {}'.format(str(datetime.now())))``` and ```        print('After, Time: {}'.format(str(datetime.now())))``` to ensure that you can see how long it takes in between each pandas pull and log the time to see how much time is left for your code to run.
+
+```
+    while cur_length == limit:
+        # df = dataframe, * = all
+        print('Before, Time: {}'.format(str(datetime.now())))
+        df = pd.read_sql("SELECT * FROM parent_reply WHERE unix > {} and parent NOT NULL and score > 0 ORDER BY unix ASC LIMIT {}".format(last_unix,limit),connection)
+        print('After, Time: {}'.format(str(datetime.now())))
+        last_unix = df.tail(1)['unix'].values[0]
+        cur_length = len(df)
+```
+Let's partition the testing data, and separate the parent ("from") and its corresponding reply ("to"). Let's do the same for the training data. Later, when you look at your data, you'll be able to see that they are paired matches, with a comment and a reply that makes sense!
+
+*Aside: Training data and testing data are separated so that we can train the model to learn, and then we will still have enough data left to test the model to see if it learned what we wanted it to learn. The training dataset will always be significantly larger than the testing data, because the more data that the model is trained on, the more it will most likely learn.*
+
+```
+         if not test_done:
+            with open('/Volumes/Seagate Expansion Drive/test.from','a', encoding='utf8') as f:
+                for content in df['parent'].values:
+                    f.write(content+'\n')
+
+            with open('/Volumes/Seagate Expansion Drive/test.to','a', encoding='utf8') as f:
+                for content in df['comment'].values:
+                    f.write(str(content)+'\n')
+
+            test_done = True
+            
+        else:
+            # training data
+            # "from" data is the comment and "to" data is the reply
+            with open('/Volumes/Seagate Expansion Drive/train.from','a', encoding='utf8') as f:
+                for content in df['parent'].values:
+                    f.write(content+'\n')
+
+            with open('/Volumes/Seagate Expansion Drive/train.to','a', encoding='utf8') as f:
+                for content in df['comment'].values:
+                    f.write(str(content)+'\n')
+```
+Now, let's increment the counter and keep the loop going. Every 20 x limit (since our limit is 5,000 then 20 x 5,000 = 100,000) rows we will see this information printed. 
+```
+        counter += 1
+        if counter % 20 == 0:
+            # 
+            print(counter*limit,'rows completed so far')
+```
 
 Step 5: Train with [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot) 
 ------------------------------------------------------------------------------------
@@ -325,12 +426,22 @@ So after getting Paperspace approved, I decided to spring $10 and go ahead. Use 
 Problems with Ubuntu - you need to download tensorflow gpu with a series of other pieces of software. You can take this route, but it's time intensive.
 I decided to just leave it to my sample data.
 
+used nmt-chatbot which provides tools for your bot. it's a set of utitlities sitting on top of tensorflow's nmt code
+ nmt requires tensorflow 1.4.0
+
+ used cpu instead of gpu because didnt have nvdia card for gpu but doesnt work
+ problem: data storage so plugged in external harddrive
+ mac doesnt allow tensorflow-gpu and this is important
+
+
 Step 6: Interact and Test
 ------------------------------
+**Work in Progress! Data is still training. (It has been 50 hours at this point. I'm also using 3 separate servers...!)**
 
 Results and Reflection
 -----------------------
+**Work in Progress! Data is still training. (It has been 50 hours at this point. I'm also using 3 separate servers...!)**
 
 Acknowledgements
 -----------------
-Thank you to sentdex, pythonprogramming.net, George Witteman, and Professor Josh deLeeuw for all your help and support.  
+Thank you to sentdex, pythonprogramming.net, George Witteman, and Professor Josh deLeeuw for all your help and support!
