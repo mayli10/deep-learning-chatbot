@@ -29,13 +29,12 @@ Introduction
 When I hear the buzzwords *neural network* or *deep learning*, my first thought is *intimidated*. 
 Even with a background in Computer Science and Math, self-teaching machine learning is challenging. The modern world of artificial intelligence is exhilarating and rapidly-advancing, but the barrier to entry for learning how to build your own machine learning models is still dizzyingly high. 
 
-I began my deep learning journey with a grand idea - I wanted to build a chatbot with functions that I hoped could improve mental healthcare. Because my current college, Vassar College, doesn't offer any machine learning courses, I found my way into a Deep Learning independent study with Professor Josh deLeeuw and began to self-teach with Dr. Andrew Ng's deeplearning.ai online class. 
+I began my deep learning journey with a grand idea - I wanted to build a chatbot with functions that I hoped could improve mental healthcare. Because my current college, Vassar College, doesn't offer any machine learning courses, I found my way into a Deep Learning independent study with Professor Josh deLeeuw and began to self-teach with Dr. Andrew Ng's [deeplearning.ai](https://deeplearning.ai) online class. 
 But, after continuously finding myself lost in the dense mathematical jargon and beginner-unfriendly tutorials, I realized that I needed to find an alternative. Thus, I stumbled upon sentdex's [tutorials](https://pythonprogramming.net/chatbot-deep-learning-python-tensorflow/), and found the extensive explanations to be a wonderful relief. 
 
 However, I realized that there is still a signficant learning curve involved for those, like me, who have limited experience with machine learning or Python. While the tutorials are clear to understand, there are multiple bugs, software incompatibilities, and hidden or unexpected technical difficulties that arose when I completed this tutorial. There were many challenges that were near-impossible to solve without consulting external sources of knowledge or extensive research, and many hidden prerequisites that almost forced me to quit my journey through the tutorial as many other people have done. 
 
 My primary goal in building this chatbot is to first understand the foundations for building a deep learning chatbot, and then curating my chatbot to address a specific need in the mental health care industry. My secondary goal is to provide the essentials tips and bug fixes that have not been properly documented in the original tutorial and that I have learned through my own experience. I realized that without this supplemental information, I would not have been able to complete the tutorial by my own. 
-Thus, this tutorial serves as both an everything-you-need-to-know walk-through for those who are just beginning to build deep learning models as well as a documentation of my own journey of building this bot.
 
 **Thus, I decided to document my experience and create this deep-dive beginner-oriented tutorial which will help ease the bugs that arise. All material has been adapted from [sentdex](https://www.youtube.com/watch?v=dvOnYLDg8_Y&t=140s). This tutorial serves as both an everything-you-need-to-know walk-through for those who are just beginning to build deep learning models as well as a documentation of my own journey of building this bot!**
 
@@ -46,7 +45,7 @@ You must have:
 
 1. **Latest versions of Python3.6+ (the programming language we are using) and Pip3 (package management system for Python3) installed** 
 2. **At least 50 GB of unused storage.** The dataset we'll be using is 33.5 GB, but you'll need even more (~8 GB) later on. Free up storage with your pc's Storage Management System or use an external hard drive. 
-3. **An IDE, such as Atom or Sublime.** Any text editor will work, but it is recommended that you have access to a debugger.
+3. **A text editor such as Atom or Sublime.** Any text editor will work, but it is recommended that you have access to a debugger.
 4. **Enough time.** There are 3 timesucks to this project: Step 4 (~6 hours), Step 5 (~2.5 hours), and Step 6 (~40 hours). *Note: I used an external hard drive, so the speed and time it has taken me to run my code is likely to be slower than average. However, every computer is different based on numerous factors such as memory and even internet speed, so always plan to budget more time than expected.* If you want to cut down on time, prepare to trade with money. As I will mention in Step 4, 5, and 6, there are alternatives to explore.
 
 Setup
@@ -67,9 +66,10 @@ If you would like to talk to the chatbot live, then navigate out of the deep-lea
 
 Datasets
 --------- 
-If you are new to machine learning, a good tip to remember is that the most important and difficult aspect of machine learning is finding enough of the correct training data to train the model on. Training the model could be expensive and time-consuming, and we also need to find the specific type of data to train with. Some good dataset sources for future projects can be found at r/data, uci repository, or kaggle. The larger the dataset, the more information the model will have to learn from, and (usually) the better your model will have learned. But, since we are constrained by the memory of our computers or the monetary cost of external storage, let’s build our chatbot with the minimal amount of data needed to train a decent model. 
+If you are new to machine learning, a good tip to remember is that the most important and difficult aspect of machine learning is finding enough of the correct training data to train the model on. Training the model could be expensive and time-consuming, and we also need to find the specific type of data to train with. Some good dataset sources for future projects can be found at [r/datasets](https://www.reddit.com/r/datasets/), [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php), or [Kaggle](https://www.kaggle.com/). The larger the dataset, the more information the model will have to learn from, and (usually) the better your model will have learned. But, since we are constrained by the memory of our computers or the monetary cost of external storage, let’s build our chatbot with the minimal amount of data needed to train a decent model. 
 
-Even this amount of data is not tiny. We will be using all the Reddit comments from May 2015, representing just 54 million rows of a dataset containing 1.7 billion Reddit comments. This month of data will be more than enough to train a decent model, but if you want to take it one step further beyond the basics, read more at sentdex’s tutorial here. Download the May 2015 data here, and if you want to view the full dataset, you can find it here and here. 
+Even this amount of data is not tiny. We will be using all the Reddit comments from May 2015 
+(labeled RC_2015-05.bz2), representing just 54 million rows of a dataset containing 1.7 billion Reddit comments. This month of data will be more than enough to train a decent model, but if you want to take it one step further beyond the basics, read more at sentdex’s tutorial here. Download the May 2015 data [here](http://files.pushshift.io/reddit/comments/), and if you want to view the full dataset, you can find it [here](https://www.reddit.com/r/datasets/comments/3bxlg7/i_have_every_publicly_available_reddit_comment/?st=j9udbxta&sh=69e4fee7). 
 
 If you are unfamiliar with Reddit, the comments are structured in a non-linear tree structure. A Redditor makes a post, and other Redditors comment on the post. There can be:
 1.	Comment with no replies
@@ -78,15 +78,17 @@ If you are unfamiliar with Reddit, the comments are structured in a non-linear t
 
 Because we just need a comment (input) and reply (output) pair, we will be addressing how to filter out the data so that we pick comment-reply pairs. Furthermore, if there are multiple replies to the comment, we will pick the top-voted reply. We will address this issue at Step 5.
 
-**How to download:**
-Make sure that you have at least 50 GB of free space on your computer. Use software such as Application Deleter, clean my macbook, or the storage manager to do this, but if you still don’t have enough, a good way to address this issue would be to buy an external hard drive. The one I am using is ___, and it contains _GB of space for a relatively cheap price of __. I began with using software to make space for the data, but after multiple efforts and many hours of whittling down my Applications folder, it made sense to just use an external hard drive. It will definitely be slower to use the hard drive, but if it’s the last option for you, then it’s still a viable option.
+**How to Download:**
+Make sure that you have at least 50 GB of free space on your computer. Use software such as [App Cleaner](https://freemacsoft.net/appcleaner/), [CleanMyMac](https://cleanmymac.com/), or the Storage Management Tool on your computer to do this, but if you still don’t have enough, a good way to address this issue would be to buy an external hard drive. The one I am using is [Seagate](https://www.amazon.com/Seagate-Portable-External-Photography-STDR2000100/dp/B00FRHTSK4), and it contains 1 TB of space for a relatively cheap price of $53. I began with using software to make space for the data, but after multiple efforts and many hours of whittling down my Applications folder, it made sense to just use an external hard drive. It will definitely be slower to use the hard drive, but if it’s the last option for you, then it’s still a viable option.
 
 If you’re using an external storage drive, plug in your drive and make sure to download your file directly into the drive.
-If neither of these options work, another option is to use AWS or Paperspace. Skip down to step 5 to learn more about Paperspace if you choose this option.
+If neither of these options work, another option is to use [Amazon Web Services (AWS)](https://aws.amazon.com/) or [Paperspace](https://www.paperspace.com/&R=IJHK5NF). Skip down to step 5 to learn more about Paperspace if you choose this option.
 
 Deep Learning vs. Machine Learning
 --------------
-Deep learning is a type of machine learning that uses feature learning to continuously and automatically analyze data to detect features or classify data. Essentially, deep learning uses a larger amount of layers of algorithms in models such as a recurrent neural network or deep neural network to take machine learning a step further. While machine learning learns using algorithms and makes informed decisions, deep learning is a type of machine learning that furthermore uses these algorithms with more networks of layers to make intelligent inferred decisions. While wit machine learning, the engineer needs to provide the features that the model needs for classification, deep learning automatically discovers these features itself.  Although deep learning generally needs much more data to train than machine learning, the results are often much more advanced than that of machine learning.
+Deep learning is a type of machine learning that uses feature learning to continuously and automatically analyze data to detect features or classify data. Essentially, deep learning uses a larger amount of layers of algorithms in models such as a Recurrent Neural Network or Deep Neural Network to take machine learning a step further. 
+
+While machine learning learns using algorithms and makes informed decisions, deep learning is a type of machine learning that furthermore uses these algorithms with more networks of layers to make intelligent inferred decisions. While with machine learning, the programmer needs to provide the features that the model needs for classification, deep learning automatically discovers these features itself. Although deep learning generally needs much more data to train than machine learning, the results are often much more advanced than that of machine learning.
 
 Chatbot with Neural Machine Translation (NMT)
 --------------
@@ -104,13 +106,11 @@ It is essential that we use Bi-Directional Recurrent Neural Networks because wit
 
 Step 1: Structure and Clean the Data
 --------------------------------------
-Starting at these steps, please view and follow along with my chatbot_database.py file
-(included below). I provide commentary (indicated by the #) to almost every block of code to explain what is happening at each line. Note: If you're also following along in the video and text tutorials, sentdex talks about buffering through the data if you're working with multiple months of data. This is an advanced option that I will not be explaining in detail because we will only be working with 1 month,  but we will still write the code that sets up the data buffering. 
+Starting at these steps, please view and follow along with my chatbot_database.py file (included below). I provide commentary (indicated by the #) to almost every block of code to explain what is happening at each line. **Note: If you're also following along in the video and text tutorials, sentdex talks about buffering through the data if you're working with multiple months of data. This is an advanced option that I will not be explaining in detail because we will only be working with 1 month, but we will still write the code that sets up the data buffering.**
 
-Let's first store the data into an SQLite database, so we will need to import SQLite3 so we can insert the data into the database with sqlite3 queries.
+Let's first store the data into an SQLite database, so we will need to import SQLite3 so we can insert the data into the database with SQLite queries.
 
-We will also need to import JSON to load the lines of data and to import datetime to log
-and keep track of how long it takes to process the data. **Seeing the date of time of when each set of data finished processing is extremely helpful for determining how long it will take to finish!** 
+We will also need to import JSON to load the lines of data and to import datetime to log and keep track of how long it takes to process the data. **Seeing the date of time of when each set of data finished processing is extremely helpful for determining how long it will take to finish!** 
 
 ```
 import sqlite3
@@ -433,13 +433,13 @@ I originally naively began attemping to train my bot with my Macbook Pro, a pret
 
 But, I didn't even get that far. I realized immediately that I was unable to install tensorflow-gpu, which is essential to training the model, on Macs because [it is no longer supported on macOS systems](https://www.tensorflow.org/install/install_mac).
 
-So, I decided to try and train my model without tensorflow-gpu on a Mac with more storage. My boyfriend George Witteman graciously loaned me his own 512 GB Macbook Pro, and I trained a sample set of data on his computer around 50 hours ago. 
+So, I decided to try and train my model without tensorflow on a Mac with more storage. My boyfriend George Witteman graciously loaned me his own 512 GB Macbook Pro, and I trained a sample set of data on his computer around 50 hours ago. 
 It's still running. At 100% CPU load. 
 
 Unsure if this would work properly, I decided it would be worth it to pay money for a virtual environment that has GPU cards installed for faster training. Sentdex mentioned [Paperspace](https://www.paperspace.com/&R=IJHK5NF) so I decided to try it. *PS. this referral link gives you $5 in free credit if you want to use a virtual environment too.*
 However, here's a warning: when you first sign up for Paperspace, you are not allowed to order a machine until you submit a written request that needs to be verified and approved by a Paperspace team member. So, another dead end.
 
-Finally, as a last ditch effort, George dug up his old desktop PC that runs on Linux and has 1 TB of storage. I was able to run tensorflow-gpu on this Linux system, but with no GPU cards, the training still remains frustratingly slow. It has been 55 hours and it's still running at 100% CPU load. 
+Finally, as a last ditch effort, George dug up his old desktop PC that runs on Linux and has 1 TB of storage. I was not able to run tensorflow-gpu on this Linux system and with no GPU cards, the training still remains frustratingly slow. It has been 55 hours and it's still running at 100% CPU load. 
 
 When Paperspace finally granted me the ability to order a virtual environment, it was 12 hours later. I went ahead anyways, but alas, I ran into problems with the Ubuntu operating system in the virtual environment. You cannot install tensorflow-gpu without installing multiple other pieces of software, which requires a much more time-intensive learning curve. I am now pursuing [this option,](https://www.tensorflow.org/install/install_linux) but it is costing me more hours to learn and download (with money too! costs $0.40 an hour and $6 a month on Paperspace). 
 
@@ -447,10 +447,10 @@ So, this is my current state: waiting for the data to finish training on two com
 
 **Now, if you have decided you are wholly prepared to train your model, let's begin**
 As mentioned before, we will be using a set of utilities that uses Tensor Flow's [nmt model](https://github.com/tensorflow/nmt) called [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot) made by sentdex and his friend Daniel Kukiela. nmt-chatbot provides the toolset to train our chatbot, but it will require the following to train:
-* tensorflow-gpu 1.4.0
+* tensorflow-gpu 1.4.0 (Use tensorflow if you don't have GPU support)
 * Python 3.6+
-* CUDA Toolkit 8.0
-* cuDNN 6.1 - to install, see the [Windows](https://www.youtube.com/watch?v=r7-WPbx8VuY) tutorial or [Linux](https://pythonprogramming.net/how-to-cuda-gpu-tensorflow-deep-learning-tutorial) tutorial
+* CUDA Toolkit 8.0 (Do not use if you don't have GPU support)
+* cuDNN 6.1 - to install, see the [Windows](https://www.youtube.com/watch?v=r7-WPbx8VuY) tutorial or [Linux](https://pythonprogramming.net/how-to-cuda-gpu-tensorflow-deep-learning-tutorial) tutorial (Do not use if you don't have GPU support)
 
 Follow these steps on your terminal (as adapted from [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot):
 1. ```$ git clone --branch v0.1 --recursive https://github.com/daniel-kukiela/nmt-chatbot.git```
