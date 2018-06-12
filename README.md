@@ -54,13 +54,16 @@ Setup
 **NOTE: Because my model is not done training, do not execute these steps (yet) since it will not work (yet!!).**
 If you want to check out the chatbot that I have built, follow these steps. Note: to run this, you must still have all the prerequisites mentioned above! Otherwise, continue with the tutorial to build your own! 
 
-1. Open up your terminal, and type: ```$ git clone --recursive https://github.com/mayli10/deep-learning-chatbot```
-2. Make sure you are in the deep-learning-chatbot folder that you just created. 
-   Then in your terminal, type: ```$ python3 hello_chatbot.py``` This will show questions/comments and its corresponding replies.
-3. If you would like to talk to the chatbot live, then navigate out of the deep-learning-chatbot folder, and clone sentdex's helper utilities repository. 
-   In your terminal, type: ```$ git clone --branch v0.1 --recursive https://github.com/daniel-kukiela/nmt-chatbot.git```
-4. We will now use the inference utility. In your terminal, type: ```$ python3 inference.py < hello_chatbot.py```
-5. If you are having trouble, use sentdex's demo [here](https://github.com/daniel-kukiela/nmt-chatbot/blob/master/README.md#demo-chatbot)
+Open up your terminal, and type: 
+1. ```$ git clone --recursive https://github.com/mayli10/deep-learning-chatbot```
+2. ```$ cd deep-learning-chatbot``` 
+3. ```$ python3 hello_chatbot.py``` This will show questions/comments and its corresponding replies.
+
+If you would like to talk to the chatbot live, then navigate out of the deep-learning-chatbot folder, and clone sentdex's helper utilities repository in a new folder.
+
+4. ```$ git clone --branch v0.1 --recursive https://github.com/daniel-kukiela/nmt-chatbot.git```
+5. We will now use the inference utility. In your terminal, type: ```$ python3 inference.py < hello_chatbot.py```
+6. If you are having trouble, use sentdex's demo [here](https://github.com/daniel-kukiela/nmt-chatbot/blob/master/README.md#demo-chatbot)
 
 Datasets
 --------- 
