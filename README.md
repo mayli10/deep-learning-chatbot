@@ -421,34 +421,58 @@ Now, let's increment the counter and keep the loop going. Every 20 x limit (sinc
 
 Step 5: Train with [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot) 
 ------------------------------------------------------------------------------------
-**Get ready for the motherlode of timesucks** - *training your model*
-This is where the biggest bugs and obstacles will arise. If you can't train your model, then all this hard work is for nothing, so you and I both will keep finding a way to make it work until it does. Before showing you how to run your model, let me first tell you my story and how I am still fighting this battle right now so you don't make the same mistakes as me.
+**Get ready for the motherlode of timesucks** - *training your model*.
 
-I originally naively began attemping to train my bot with my mac, but it soon became clear that I wouldn't be able to even begin without using tensorflow-gpu, which isn't supported on OS operation systems anymore.
-So, George Witteman graciously pulled out his Linux system 8gb of memory and 1.5 tb of storage to train on. Even then, it took 11 hours to train, and it hadn't even finished training.
+This is where the biggest bugs and obstacles will arise. If you can't train your model, then all this hard work is for nothing, so you and I both will keep finding a way to make it work until it does. Before showing you how to run your model, let me first tell you the story of how I am still fighting this battle right now so you don't make the same mistakes as I had.
 
-So after getting Paperspace approved, I decided to spring $10 and go ahead. Use this link for $10 of free credit for a virtual environment. 
-Problems with Ubuntu - you need to download tensorflow gpu with a series of other pieces of software. You can take this route, but it's time intensive.
-I decided to just leave it to my sample data.
+I originally naively began attemping to train my bot with my Macbook Pro, a pretty shiny thing will just 15 out of 120 GB available and obviously no graphics cards (GPUs) installed. With my database stored on an external hard drive, this was already posing an issue since the bottleneck of having the data stored outside of the CPU was already going to mean the model would take a very very very long time to train.
 
-used nmt-chatbot which provides tools for your bot. it's a set of utitlities sitting on top of tensorflow's nmt code
- nmt requires tensorflow 1.4.0
+But, I didn't even get that far. I realized immediately that I was unable to install tensorflow-gpu, which is essential to training the model, on Macs because [it is no longer supported on macOS systems](https://www.tensorflow.org/install/install_mac).
 
- used cpu instead of gpu because didnt have nvdia card for gpu but doesnt work
- problem: data storage so plugged in external harddrive
- mac doesnt allow tensorflow-gpu and this is important
+So, I decided to try and train my model without tensorflow-gpu on a Mac with more storage. My boyfriend George Witteman graciously loaned me his own 512 GB Macbook Pro, and I trained a sample set of data on his computer around 50 hours ago. 
+It's still running. At 100% CPU load. 
+
+Unsure if this would work properly, I decided it would be worth it to pay money for a virtual environment that has GPU cards installed for faster training. Sentdex mentioned [Paperspace](https://www.paperspace.com/&R=IJHK5NF) so I decided to try it. *PS. this referral link gives you $5 in free credit if you want to use a virtual environment too.*
+However, here's a warning: when you first sign up for Paperspace, you are not allowed to order a machine until you submit a written request that needs to be verified and approved by a Paperspace team member. So, another dead end.
+
+Finally, as a last ditch effort, George dug up his old desktop PC that runs on Linux and has 1 TB of storage. I was able to run tensorflow-gpu on this Linux system, but with no GPU cards, the training still remains frustratingly slow. It has been 55 hours and it's still running at 100% CPU load. 
+
+When Paperspace finally granted me the ability to order a virtual environment, it was 12 hours later. I went ahead anyways, but alas, I ran into problems with the Ubuntu operating system in the virtual environment. You cannot install tensorflow-gpu without installing multiple other pieces of software, which requires a much more time-intensive learning curve. I am now pursuing [this option,](https://www.tensorflow.org/install/install_linux) but it is costing me more hours to learn and download (with money too! costs $0.40 an hour and $6 a month on Paperspace). 
+
+So, this is my current state: waiting for the data to finish training on two computers and learning how to train the dataset on a third server. Moral of the story? *Be willing to spend a long, long time, or a lot, lot of money.* 
+
+**Now, if you have decided you are wholly prepared to train your model, let's begin**
+As mentioned before, we will be using a set of utilities that uses Tensor Flow's [nmt model](https://github.com/tensorflow/nmt) called [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot) made by sentdex and his friend Daniel Kukiela. nmt-chatbot provides the toolset to train our chatbot, but it will require the following to train:
+* tensorflow-gpu 1.4.0
+* Python 3.6+
+* CUDA Toolkit 8.0
+* cuDNN 6.1 - to install, see the [Windows](https://www.youtube.com/watch?v=r7-WPbx8VuY) tutorial or [Linux](https://pythonprogramming.net/how-to-cuda-gpu-tensorflow-deep-learning-tutorial) tutorial
+
+Follow these steps on your terminal (as adapted from [nmt-chatbot](https://github.com/daniel-kukiela/nmt-chatbot):
+1. ```$ git clone --branch v0.1 --recursive https://github.com/daniel-kukiela/nmt-chatbot.git```
+2. ```$ cd nmt-chatbot```
+3. ```$ pip3 install -r requirements.txt```
+4. ```$ cd setup```
+
+If you've made it this far, open up the "new_data" folder and replace the sample training data with your own (which should already have been labeled train.to and train.from). **Now, here's a tricky part: regardless of whether or not you're using testing data from 2013 and 2012 or not (we aren't...) you want to make a copy of your test.from data and name the first copy tst2013.from and then name the second copy tst2012.from. Now, make a copy of your test.to data and name the first copy tst2013.to and then name the second copy tst2012.to. nmt-chatbot uses these exact filenames, so it is best to stick to their naming conventions. When I tried to modify the code for this, I was berated with errors, so this is the safest route.**
+
+5. ```$ python prepare_data.py``` 
+After running this line, a new folder called "data" will be created with prepared training data. 
+6. ```$ cd ../```
+7. ```$ python train.py```
+
+Now, you have done all you can do to train your model and your last task is simply to wait. This could take hours, days, or even weeks. Sit back, disable your automatic sleep function on your computer, plug in your computer charger, and maybe invest in a fan to put underneath your laptop. Keep an eye on your terminal in case any errors pop up!
 
 Step 6: Interact and Test
 ------------------------------
 **Work in Progress! Data is still training. (It has been 50 hours at this point. I'm also using 2 separate servers...see below!)**
-![alt text](/mac.jpeg?raw=true "George's Mac: still running TensorFlow on sample-sized data")
+![alt text](/mac.jpeg?raw=true "George's Mac: still running TensorFlow on sample-sized data. (Not Shown) CPU is running at 100%")
 
 Results and Reflection
 -----------------------
-**Work in Progress! Data is still training. (It has been 50 hours at this point. I'm also using 2 separate servers...see below!)**
-![alt text](/pc.jpeg?raw=true "George's PC: still running TensorFlow-GPU on the May 2015 data")
-
+**Work in Progress! Data is still training. (It has been 55 hours at this point. I'm also using 2 separate servers...see below!)**
+![alt text](/pc.jpeg?raw=true "George's PC: still running TensorFlow-GPU on the May 2015 data. Notice that CPU is running at 100%")
 
 Acknowledgements
 -----------------
-Thank you to sentdex, pythonprogramming.net, George Witteman, and Professor Josh deLeeuw for all your help and support!
+Thank you to sentdex and pythonprogramming.net for the amazing lessons, George Witteman for sacrificing both his computers for an infinite number of training hours, Tensor Flow's NMT model and sentdex & Daniel Kukiela's nmt-chatbot utility for making my learning experience significantly less painful, and Professor Josh deLeeuw for your patience and support!
