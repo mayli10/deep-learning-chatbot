@@ -16,10 +16,10 @@ for timeframe in timeframes:
     # keep making pulls until reach the limit, then we will put the data into the dataframe
     while cur_length == limit:
         # df = dataframe, * = all
-        # print('before, time = {}'.format(str(datetime.now())))
+        print('Before, Time = {}'.format(str(datetime.now())))
         df = pd.read_sql("SELECT * FROM parent_reply WHERE unix > {} AND parent NOT NULL AND score > 0 ORDER BY unix ASC LIMIT {}".format
         (last_unix, limit), connection)
-        # print('after, time = {}'.format(str(datetime.now())))
+        print('After, Time = {}'.format(str(datetime.now())))
         last_unix = df.tail(1)['unix'].values[0]
         cur_length = len(df)
         if not test_done:
