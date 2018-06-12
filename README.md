@@ -51,6 +51,7 @@ You must have:
 
 Setup
 ------
+**NOTE: Because my model is not done training, do not execute these steps (yet) since it will not work (yet!!).**
 If you want to check out the chatbot that I have built, follow these steps. Note: to run this, you must still have all the prerequisites mentioned above! Otherwise, continue with the tutorial to build your own! 
 
 1. Open up your terminal, and type: ```$ git clone --recursive https://github.com/mayli10/deep-learning-chatbot```
